@@ -22,7 +22,7 @@ with open('HISTORY.md') as f:
 
 setuptools.setup(
     name=NAME,
-    description="Useful constructs building upon asynchronous iterators.",
+    description="Useful patterns building upon asynchronous iterators.",
     long_description=readme + '\n\n' + history,
     long_description_content_type="text/markdown",
     author="Richard Kiss",

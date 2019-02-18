@@ -5,7 +5,14 @@ from .push_aiter import push_aiter
 
 def aiter_forker(aiter):
     """
-    Wrap an iterator with push_aiter. This can also be forked.
+    If you have an aiter that you would like to fork (split into multiple
+    iterators, each of which produces the same elements), wrap it with this
+    function.
+
+    Returns a :class:`aiter.push_aiter <push_aiter>` object that will yield
+    the same objects in the same order. This object supports
+    :py:func:`fork <aiter.push_aiter.fork>`, which will let you create a
+    duplicate stream.
     """
 
     open_aiter = aiter.__aiter__()

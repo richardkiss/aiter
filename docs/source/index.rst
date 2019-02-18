@@ -6,10 +6,30 @@
 Welcome to aiter's documentation!
 =================================
 
+.. image:: https://codecov.io/github/richardkiss/aiter/coverage.svg?branch=master
+    :target: https://codecov.io/github/richardkiss/aiter
+
+.. image:: https://img.shields.io/pypi/l/aiter.svg
+    :target: https://pypi.python.org/pypi/aiter
+
+.. image:: https://img.shields.io/pypi/pyversions/aiter.svg
+    :target: https://pypi.python.org/pypi/aiter
+
+.. image:: https://travis-ci.org/richardkiss/aiter.svg?branch=master
+    :target: https://travis-ci.org/richardkiss/aiter
+
+This documentation is a work-in-progress, and your contributions are welcome.
+Your contributions are welcome at <https://github.com/richardkiss/aiter>.
+
+
+
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+.. automodule:: aiter
+    :members:
 
 
 Indices and tables
