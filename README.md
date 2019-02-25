@@ -19,3 +19,4 @@ which is a huge improvement over using `async.Queue` objects which have no built
 
 This module implements some patterns useful for python asynchronous iterators.
 
+Documentation available on [readthedocs.io](https://aiter.readthedocs.io/).

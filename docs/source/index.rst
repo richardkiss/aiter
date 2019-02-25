@@ -18,8 +18,8 @@ Welcome to aiter's documentation!
 .. image:: https://travis-ci.org/richardkiss/aiter.svg?branch=master
     :target: https://travis-ci.org/richardkiss/aiter
 
-This documentation is a work-in-progress, and your contributions are welcome.
-Your contributions are welcome at <https://github.com/richardkiss/aiter>.
+This documentation is a work-in-progress, and your contributions are welcome
+at <https://github.com/richardkiss/aiter>.
 
 
 
