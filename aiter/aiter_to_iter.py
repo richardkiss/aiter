@@ -7,12 +7,12 @@ def aiter_to_iter(aiter, loop=None):
     run_until_complete repeatedly.
 
     :type aiter: aiter
-    :param aiter: an asynchronous iterator
+    :param aiter: an async iterator
 
     :type loop: asyncio event loop
     :param loop: the loop which will run *aiter*
 
-    :return: a *synchronous* iterator returning the same elements as *aiter*
+    :return: a *synchronous* iterator returning the same elements as aiter
     :rtype: a *synchronous* iterator
     """
     if loop is None:

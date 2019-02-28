@@ -2,6 +2,10 @@ import asyncio
 
 
 class stoppable_aiter:
+    """
+    A wrapper around an iterator that supports a manual shut-off.
+    """
+
     def __init__(self, aiter):
         self._open_aiter = aiter.__aiter__()
         self._is_stopping = False

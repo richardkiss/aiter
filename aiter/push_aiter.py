@@ -129,7 +129,10 @@ class push_aiter:
     def is_stopped(self):
         """
         Return a boolean indicating whether or not :py:func:`stop <stop>`
-        has been called.
+        has been called. Additional elements may still be available.
+
+        :return: whether or not the aiter has been stopped
+        :rtype: bool
         """
         return self._tail.cancelled()
 
@@ -137,6 +140,9 @@ class push_aiter:
         """
         Return a boolean indicating whether or not an element is available without
         blocking for a task switch.
+
+        :return: whether or not the aiter has been stopped
+        :rtype: bool
         """
         return self.is_len_at_least(1)
 
@@ -144,6 +150,12 @@ class push_aiter:
         """
         Return a boolean indicating whether or not `n` elements are available without
         blocking for a task switch.
+
+        :type n: int
+        :param n: count of items
+
+        :return: True iff n items are available
+        :rtype: bool
         """
         for _, item in enumerate(self.available_iter()):
             if _+1 >= n:
@@ -151,4 +163,9 @@ class push_aiter:
         return False
 
     def __len__(self):
+        """
+        :return: number of items immediately available withouth blocking
+        :rtype: int
+        """
+
         return sum(1 for _ in self.available_iter())

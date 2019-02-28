@@ -12,6 +12,12 @@ class gated_aiter:
     When a number is pushed, that many items are allowed out through the gate.
 
     This is kind of like a discrete version of an electronic transistor.
+
+    :type aiter: aiter
+    :param aiter: an async iterator
+
+    :return: an async iterator yielding the same values as the original aiter
+    :rtype: :class:`aiter.gated_aiter <gated_aiter>`
     """
     def __init__(self, aiter):
         self._gate = push_aiter()
@@ -26,8 +32,17 @@ class gated_aiter:
             return (await self._open_aiter.__anext__())[0]
 
     def push(self, count):
+        """
+        Note that several additional items are allowed through the gated_aiter.
+
+        :type count: int
+        :param count: the number of items that can be allowed out the aiter. These are cumulative.
+        """
         if not self._gate.is_stopped():
             self._gate.push(count)
 
     def stop(self):
+        """
+        After the previously authorized items (from `push`) are pulled out the aiter, the aiter will exit.
+        """
         self._gate.stop()

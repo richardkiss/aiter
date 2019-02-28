@@ -13,6 +13,12 @@ def aiter_forker(aiter):
     the same objects in the same order. This object supports
     :py:func:`fork <aiter.push_aiter.fork>`, which will let you create a
     duplicate stream.
+
+    :type aiter: aiter
+    :param aiter: an async iterator
+
+    :return: a :class:`aiter.push_aiter <push_aiter>`
+    :rtype: :class:`aiter.push_aiter <push_aiter>`
     """
 
     open_aiter = aiter.__aiter__()
