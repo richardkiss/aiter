@@ -24,14 +24,19 @@ def aiter_forker(aiter):
                 pa.push(_)
         except StopAsyncIteration:
             pa.stop()
+        pa.head().event.clear()
 
     def make_kick():
         def kick(pa):
-            if pa.head().task and not pa.head().task.done():
+            event = pa.head().event
+            if event.is_set():
                 return
+            event.set()
             pa.head().task = asyncio.ensure_future(worker(open_aiter, pa))
         return kick
 
     pa = push_aiter(next_preflight=make_kick())
+    pa.head().event = asyncio.Event()
+    pa.head().event.set()
     pa.head().task = asyncio.ensure_future(worker(open_aiter, pa))
     return pa
