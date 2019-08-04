@@ -1,11 +1,12 @@
 import asyncio
+import functools
 
 from aiter import join_aiters, map_aiter
 from aiter.server import start_server_aiter
 
 
-async def handle_event(line_sw_server_tuple):
-    line, sw, server = line_sw_server_tuple
+async def handle_event(server_line_sw_tuple):
+    server, line, sw = server_line_sw_tuple
     await sw.drain()
     if line == b"\n":
         sw.close()
@@ -15,20 +16,22 @@ async def handle_event(line_sw_server_tuple):
     return line
 
 
+async def stream_reader_writer_to_line_writer_aiter(server, pair):
+    sr, sw = pair
+    while True:
+        line = await sr.readline()
+        if len(line) == 0:
+            break
+        yield server, line, sw
+
+
 async def main():
     server, aiter = await start_server_aiter(7777)
 
-    # this is moved here so it can see "server"
-    async def stream_reader_writer_to_line_writer_aiter(pair):
-        sr, sw = pair
-        while True:
-            r = await sr.readline()
-            if len(r) == 0:
-                break
-            yield r, sw, server
-
     line_writer_aiter_aiter = map_aiter(
-        stream_reader_writer_to_line_writer_aiter,
+        functools.partial(
+            stream_reader_writer_to_line_writer_aiter,
+            server),
         aiter)
     line_writer_aiter = join_aiters(line_writer_aiter_aiter)
     completed_event_aiter = map_aiter(
