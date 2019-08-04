@@ -1,0 +1,69 @@
+
+* Set up
+
+Make sure you have ~ipython~, ~aiter~, and ~nc~ installed. In a pinch,
+you can use ~telnet~ instead of ~nc~.
+
+
+* An initial trivial server
+
+** Set up the server
+
+ipython
+
+from aiter.server import start_server_aiter
+server, aiter = await start_server_aiter(7777)
+async for _ in aiter: print(_)
+
+or
+
+ipython -c "from aiter.server import start_server_aiter; s, a = await start_server_aiter(7777); [print(_) async for _ in a]"
+
+** Connect to it
+
+In another terminal, do the following:
+
+nc localhost 7777
+
+then hit control-C. Then do it a few more times.
+
+On each connection, you'll see an ordered pair (r, w) where r is a StreamReader and w is a StreamWriter.
+
+** Exit cleanly
+
+Now try the following:
+
+#+BEGIN_SRC python
+from aiter.server import start_server_aiter
+server, aiter = await start_server_aiter(7777)
+count = 0
+async for _ in aiter:
+    print(_)
+    count += 1
+    if count >= 3:
+        server.close()
+#+END_SRC
+
+
+This will accept three connections, then close the server.
+
+Try launching it and connecting. After the third connection, the server will simply exit. No need explicitly break from the loop.
+
+
+* Handling Clients
+
+It's easy to extract framed bytes out of a StreamReader and turn them into messages. The simplest case might well just be
+lines terminated by a new line character: you can simply use "readline".
+
+Here is code that turns a StreamReader into an aiter of readline messages.
+
+#+BEGIN_SRC python
+async def stream_reader_to_lines(sr):
+    while True:
+        r = await sr.readline()
+        if len(r) == 0:
+            break
+        yield r
+#+END_SRC
+
+
