@@ -52,6 +52,8 @@ Try launching it and connecting. After the third connection, the server will sim
 
 * Handling Clients
 
+** One client
+
 It's easy to extract framed bytes out of a StreamReader and turn them into messages.
 
 Here is code that turns a StreamReader into an aiter of readline messages.
@@ -72,8 +74,11 @@ character, and echos them. Try connecting with ~nc~ and type a few lines. Then e
 control-D (clean exit). You'll see that the server exits cleanly, indicating that the ~line_aiter~ completed. The
 error and the clean exit code paths are the same.
 
+** Multiple Clients
 
 server => aiter of (StreamReader, StreamWriter)
+
+We have a function that makes the following transformation:
 
 (StreamReader, StreamWriter) => aiter of (message, StreamWriter)
 
@@ -92,3 +97,30 @@ aiter of (StreamReader, StreamWriter) => aiter (message, StreamWriter)
 Now we see we can write one method to handle streams from *all* clients at once.
 
 See ~examples/3-multi-client-server.py~
+
+* Finishing the Pipeline
+
+Our main loop fetches events and processes them one at a time. This choice is fairly
+arbitrary; processing events could also be considered a transformation that
+accepts events and produces a result. This result could be something very simple, such
+as ~None~ or a summary of what happened to message on its way through the pipeline.
+
+See ~examples/4-total-pipeline.py~ for an example.
+
+Why bother doing this? This will become clear when we add scaling.
+
+* Slow operations
+
+Some events might launch a long or slow-running operation that takes a while
+to complete. If you look at the task model used in example 4, you'll see that
+only one event is handled at a time. Also note that the command "wait"
+is special, and takes five seconds. Try making two connections and you'll see
+that if you "wait" in one client, the other client becomes unresponsive.
+
+This is clearly suboptimal. Luckily, there is an easy fix in ~parallel_map_aiter~,
+which is almost exactly like map_aiter except it adds a worker count.
+
+Using ~parallel_map_aiter~ has the side-effect that the order of items may change,
+since (obviously) fast events can be handled more quickly than slow events.
+
+See ~examples/5-parallel-processing.py~ for an example.
