@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 
-async def map_aiter(map_f, aiter):
+async def simple_map_aiter(map_f, aiter):
     """
     Take an async iterator and a map function, and apply the function
     to everything coming out of the iterator before passing it on.

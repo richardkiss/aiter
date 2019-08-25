@@ -1,7 +1,7 @@
 from .iter_to_aiter import iter_to_aiter
 from .join_aiters import join_aiters
-from .map_aiter import map_aiter
 from .sharable_aiter import sharable_aiter
+from .simple_map_aiter import simple_map_aiter
 
 
 def parallel_map_aiter(map_f, aiter, worker_count):
@@ -28,5 +28,6 @@ def parallel_map_aiter(map_f, aiter, worker_count):
     :rtype: an async iterator
     """
     shared_aiter = sharable_aiter(aiter)
-    aiters = [map_aiter(map_f, shared_aiter) for _ in range(worker_count)]
+    aiters = [simple_map_aiter(
+        map_f, shared_aiter) for _ in range(worker_count)]
     return join_aiters(iter_to_aiter(aiters))
