@@ -2,7 +2,7 @@ import asyncio
 import unittest
 
 
-from aiter import parallel_map_aiter, push_aiter
+from aiter import map_aiter, push_aiter
 
 
 from .helpers import run, get_n
@@ -29,10 +29,10 @@ class test_aitertools(unittest.TestCase):
         ]
 
         q = push_aiter()
-        aiter = parallel_map_aiter(
-            make_wait_index(0), parallel_map_aiter(
-                make_wait_index(1), parallel_map_aiter(
-                    make_wait_index(2), parallel_map_aiter(
+        aiter = map_aiter(
+            make_wait_index(0), map_aiter(
+                make_wait_index(1), map_aiter(
+                    make_wait_index(2), map_aiter(
                         make_wait_index(3), q, 10), 10), 10), 10)
         q.push(*TEST_CASE)
         q.stop()

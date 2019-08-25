@@ -8,10 +8,8 @@ def parallel_map_aiter(map_f, aiter, worker_count):
     """
     Take an async iterator and a map function, and apply the function
     to everything coming out of the iterator before passing it on.
-    In this case, the map_f must return a list, which will be flattened.
-    Empty lists are okay, so you can filter items by excluding them from the list.
 
-    Note that since there are multiple workers, the order or processed elements
+    Note that if there are multiple workers, the order or processed elements
     might not match the input order.
 
     :type aiter: async iterator
