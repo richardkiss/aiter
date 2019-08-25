@@ -30,10 +30,10 @@ class test_aitertools(unittest.TestCase):
 
         q = push_aiter()
         aiter = parallel_map_aiter(
-            make_wait_index(0), 10, parallel_map_aiter(
-                make_wait_index(1), 10, parallel_map_aiter(
-                    make_wait_index(2), 10, parallel_map_aiter(
-                        make_wait_index(3), 10, q))))
+            make_wait_index(0), parallel_map_aiter(
+                make_wait_index(1), parallel_map_aiter(
+                    make_wait_index(2), parallel_map_aiter(
+                        make_wait_index(3), q, 10), 10), 10), 10)
         q.push(*TEST_CASE)
         q.stop()
         r = run(get_n(aiter))

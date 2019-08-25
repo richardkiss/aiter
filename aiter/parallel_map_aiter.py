@@ -4,7 +4,7 @@ from .map_aiter import map_aiter
 from .sharable_aiter import sharable_aiter
 
 
-def parallel_map_aiter(map_f, worker_count, aiter):
+def parallel_map_aiter(map_f, aiter, worker_count):
     """
     Take an async iterator and a map function, and apply the function
     to everything coming out of the iterator before passing it on.
