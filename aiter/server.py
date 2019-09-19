@@ -1,6 +1,6 @@
 import asyncio
 
-from aiter import push_aiter
+from .push_aiter import push_aiter
 
 
 async def aiter_server(start_f, *args, **kwargs):
