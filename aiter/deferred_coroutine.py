@@ -27,13 +27,12 @@ class deferred_coroutine:
         Subsequent calls return the awaited value, since the evaluating function is
         already in progress.
         """
-
         if is_active and not self._active_invoked:
             try:
                 self._active_invoked = True
                 _ = await self._lambda_coroutine()
                 self._next_future.set_result(_)
             except Exception as ex:
-                self._next_future.set_exception(ex)
-
+                if not self._next_future.done():
+                    self._next_future.set_exception(ex)
         return await self._next_future
