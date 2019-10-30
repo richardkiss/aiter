@@ -1,4 +1,4 @@
-import asyncio
+import inspect
 
 from .parallel_map_aiter import parallel_map_aiter
 from .simple_map_aiter import simple_map_aiter
@@ -28,7 +28,9 @@ def map_aiter(map_f, aiter, worker_count=1):
     :rtype: an async iterator
     """
 
-    if not asyncio.iscoroutinefunction(map_f) and worker_count > 1:
+    if (worker_count > 1 and
+            not inspect.iscoroutinefunction(map_f) and
+            not inspect.isasyncgenfunction(map_f)):
         raise ValueError(
             "map_f is not a coroutine, which makes "
             "it pointless to use more than 1 worker")
