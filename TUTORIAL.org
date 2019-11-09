@@ -122,10 +122,10 @@ only one event is handled at a time. Also note that the command "wait"
 is special, and takes five seconds. Try making two connections and you'll see
 that if you "wait" in one client, the other client becomes unresponsive.
 
-This is clearly suboptimal. Luckily, there is an easy fix in ~parallel_map_aiter~,
-which is almost exactly like map_aiter except it adds a worker count.
+This is clearly suboptimal. Luckily, there is an easy fix in ~map_aiter~:
+use multiple workers.
 
-Using ~parallel_map_aiter~ has the side-effect that the order of items may change,
+Using ~map_aiter~ has the side-effect that the order of items may change,
 since (obviously) fast events can be handled more quickly than slow events.
 
 See ~examples/5-parallel-processing.py~ for an example.

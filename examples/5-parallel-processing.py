@@ -2,8 +2,7 @@ import asyncio
 import functools
 
 from aiter import (
-    join_aiters, map_aiter,
-    parallel_map_aiter
+    join_aiters, map_aiter
 )
 from aiter.server import start_server_aiter
 
@@ -39,10 +38,10 @@ async def main():
             server),
         aiter)
     line_writer_aiter = join_aiters(line_writer_aiter_aiter)
-    completed_event_aiter = parallel_map_aiter(
+    completed_event_aiter = map_aiter(
         handle_event,
-        5,
-        line_writer_aiter)
+        line_writer_aiter,
+        worker_count=5)
 
     async for line in completed_event_aiter:
         print(line)
