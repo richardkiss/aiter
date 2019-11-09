@@ -9,15 +9,20 @@ you can use ~telnet~ instead of ~nc~.
 
 ** Set up the server
 
+#+BEGIN_SRC python
 ipython
 
 from aiter.server import start_server_aiter
 server, aiter = await start_server_aiter(7777)
 async for _ in aiter: print(_)
+#+END_SRC
 
 or
 
+#+BEGIN_SRC sh
 ipython -c "from aiter.server import start_server_aiter; s, a = await start_server_aiter(7777); [print(_) async for _ in a]"
+#+END_SRC
+
 
 ** Connect to it
 

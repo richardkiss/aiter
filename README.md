@@ -21,4 +21,6 @@ This module implements some patterns useful for python asynchronous iterators.
 
 Documentation available on [readthedocs.io](https://aiter.readthedocs.io/).
 
+A [tutorial](TUTORIAL.org) is available. [github version](https://github.com/richardkiss/aiter/blob/feature/tutorial/TUTORIAL.org)
+
 *CAVEAT* This project is still in its infancy, and I reserve the right to rename things and cause other breaking changes.
