@@ -1,6 +1,6 @@
 "Useful patterns building upon asynchronous iterators"
 
-__version__ = "0.1.2"
+__version__ = "0.13.20191203"
 
 
 __all__ = [
