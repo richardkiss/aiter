@@ -1,0 +1,5 @@
+* Version 0.13.20191203
+
+** fold parallel_map_aiter into map_aiter
+** add some examples
+
