@@ -24,6 +24,8 @@ async def simple_map_aiter(map_f, aiter):
 
     async for _ in aiter:
         try:
-            yield await _map_f(_)
+            r = await _map_f(_)
+            _ = None
+            yield r
         except Exception:
             logging.exception("unhandled mapping function %s worker exception on %s", map_f, _)
