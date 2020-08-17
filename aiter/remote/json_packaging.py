@@ -23,8 +23,6 @@ Responses:
 from aiter import map_aiter
 
 
-from .simple_types import from_simple_types, to_simple_types
-
 from .JSONMessage import JSONMessage
 from .RPCStream import RPCStream
 
@@ -42,7 +40,7 @@ def make_push_callback(push):
 
 def rpc_stream(ws, msg_aiter_in, async_msg_out_callback):
     return RPCStream(
-        msg_aiter_in, async_msg_out_callback, JSONMessage, from_simple_types, to_simple_types,
+        msg_aiter_in, async_msg_out_callback, JSONMessage,
     )
 
 

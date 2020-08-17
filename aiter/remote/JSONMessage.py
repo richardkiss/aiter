@@ -1,6 +1,14 @@
+import datetime
+import json
+
 from typing import Any, Optional
 
-import json
+
+def convert_with_table(v, t, lookup):
+    f = lookup.get(t)
+    if f:
+        return f(v)
+    raise TypeError(f"can't convert {v} to type {t}")
 
 
 class JSONMessage:
@@ -59,3 +67,25 @@ class JSONMessage:
     def args_and_kwargs(self):
         pair = (self.d.get("a", []), self.d.get("k", {}))
         return pair
+
+    @classmethod
+    def from_simple_types(cls, v, t, rpc_streamer):
+        d = {
+            None: lambda a: None,
+            bool: lambda a: True if a else False,
+            str: lambda a: a,
+            int: lambda a: a,
+            datetime.datetime: lambda v: datetime.datetime.fromtimestamp(float(v)),
+        }
+        return convert_with_table(v, t, d)
+
+    @classmethod
+    def to_simple_types(cls, v, t, rpc_streamer):
+        d = {
+            None: lambda a: 0,
+            bool: lambda a: 1 if a else 0,
+            str: lambda a: a,
+            int: lambda a: a,
+            datetime.datetime: lambda v: str(v.timestamp()),
+        }
+        return convert_with_table(v, t, d)

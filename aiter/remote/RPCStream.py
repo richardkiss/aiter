@@ -1,9 +1,10 @@
 import asyncio
 import weakref
 
+from typing import Any, Callable, Dict, List, Type
+
 from .proxy import proxy_for_instance
 from .response import Response
-from .typecasting import recast_arguments, recast_to_type
 from .RPCMessage import RPCMessage
 
 
@@ -13,8 +14,6 @@ class RPCStream:
         msg_aiter_in,
         async_msg_out_callback,
         rpc_message_class,
-        from_simple_types,
-        to_simple_types,
         bad_channel_callback=None,
     ):
         """
@@ -26,8 +25,6 @@ class RPCStream:
         self._msg_aiter_in = msg_aiter_in
         self._async_msg_out_callback = async_msg_out_callback
         self._rpc_message_class = rpc_message_class
-        self._from_simple_types = from_simple_types
-        self._to_simple_types = to_simple_types
         self._bad_channel_callback = bad_channel_callback
         self._next_channel = 0
         self._inputs_task = None
@@ -45,7 +42,8 @@ class RPCStream:
             source = self.next_channel()
             future = asyncio.Future()
             return_type = annotations.get("return")
-            raw_args, raw_kwargs = recast_arguments(annotations, self._to_simple_types, args, kwargs)
+            to_simple_types = self._rpc_message_class.to_simple_types
+            raw_args, raw_kwargs = recast_arguments(annotations, to_simple_types, args, kwargs, self)
             msg = self._rpc_message_class.for_invocation(
                 attr_name, raw_args, raw_kwargs, source, channel
             )
@@ -82,14 +80,14 @@ class RPCStream:
 
             raw_args, raw_kwargs = msg.args_and_kwargs()
             args, kwargs = recast_arguments(
-                annotations, self._from_simple_types, raw_args, raw_kwargs
+                annotations, msg.from_simple_types, raw_args, raw_kwargs, self
             )
             source = msg.source()
             try:
                 r = await method(*args, **kwargs)
 
                 return_type = annotations.get("return")
-                simple_r = recast_to_type(r, return_type, self._to_simple_types)
+                simple_r = recast_to_type(r, return_type, msg.to_simple_types, self)
 
                 return self._rpc_message_class.for_response(source, simple_r)
             except Exception as ex:
@@ -101,7 +99,7 @@ class RPCStream:
         if e_text:
             obj.future.set_exception(IOError(e_text))
         else:
-            final_r = recast_to_type(msg.response(), return_type, self._from_simple_types)
+            final_r = recast_to_type(msg.response(), return_type, msg.from_simple_types, self)
             obj.future.set_result(final_r)
         return None
 
@@ -125,3 +123,53 @@ class RPCStream:
         Wait for `msg_aiter_in` to stop.
         """
         await self._inputs_task
+
+
+def recast_to_type(
+    value: Any, the_type: Type, cast_simple_type: Callable[[Any, Type], Any], rpc_stream: RPCStream,
+):
+    """
+    Take the given value `value`, and recast it to type `the_type`, using `cast_simple_type`,
+    drilling down through the hierarchy if necessary.
+    """
+
+    origin = getattr(the_type, "__origin__", None)
+
+    if origin is dict:
+        key_type, value_type = the_type.__args__
+        return {
+            recast_to_type(k, key_type, cast_simple_type, rpc_stream): recast_to_type(
+                v, value_type, cast_simple_type, rpc_stream
+            )
+            for k, v in value.items()
+        }
+
+    if origin is list:
+        value_type = the_type.__args__[0]
+        return list(recast_to_type(_, value_type, cast_simple_type, rpc_stream) for _ in value)
+
+    return cast_simple_type(value, the_type, rpc_stream)
+
+
+def recast_arguments(
+    annotations: Dict[str, Type],
+    cast_simple_type: Callable[[Any, Type], Any],
+    args: List[Any],
+    kwargs: Dict[str, Any],
+    rpc_stream: RPCStream,
+):
+    """
+    Returns `args`, `kwargs`, using the annotation hints and cast function.
+    """
+
+    cast_args = [
+        recast_to_type(v, t, cast_simple_type, rpc_stream)
+        for v, t in zip(args, annotations.values())
+    ]
+
+    cast_kwargs = {
+        k: recast_to_type(kwargs[k], annotations.get(k), cast_simple_type, rpc_stream)
+        for k, t in kwargs.items()
+    }
+
+    return cast_args, cast_kwargs
