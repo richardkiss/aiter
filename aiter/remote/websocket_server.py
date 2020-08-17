@@ -3,7 +3,7 @@ import logging
 
 from aiohttp import web
 
-from src.remote.json_packaging import rpc_stream_for_websocket_aiohttp
+from .json_packaging import rpc_stream_for_websocket_aiohttp
 
 log = logging.getLogger(__name__)
 

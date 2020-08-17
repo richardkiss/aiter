@@ -1,6 +1,6 @@
 import websockets
 
-from src.remote.json_packaging import rpc_stream_for_websocket
+from .json_packaging import rpc_stream_for_websocket
 
 
 class WebsocketRemote:
