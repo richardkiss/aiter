@@ -27,7 +27,7 @@ class RPCMessage:
     def target(self):
         pass
 
-    def exception_text(self) -> Optional[str]:
+    def exception(self) -> Optional[Exception]:
         pass
 
     def response(self) -> Optional[Any]:

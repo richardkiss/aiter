@@ -97,13 +97,13 @@ class RPCStream:
 
                 return self._rpc_message_class.for_response(source, simple_r)
             except Exception as ex:
-                return self._rpc_message_class.for_exception(source, str(ex))
+                return self._rpc_message_class.for_exception(source, ex)
 
         # it's a response, and obj is a Response
         return_type = obj.return_type
-        e_text = msg.exception_text()
-        if e_text:
-            obj.future.set_exception(IOError(e_text))
+        ex = msg.exception()
+        if ex:
+            obj.future.set_exception(ex)
         else:
             final_r = recast_to_type(
                 msg.response(), return_type, msg.from_simple_types, self

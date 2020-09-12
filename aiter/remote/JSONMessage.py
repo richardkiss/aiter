@@ -45,8 +45,8 @@ class JSONMessage:
         return cls(dict(t=target, r=r))
 
     @classmethod
-    def for_exception(cls, target, text):
-        return cls(dict(t=target, e=text))
+    def for_exception(cls, target, exception):
+        return cls(dict(t=target, e=str(exception)))
 
     def source(self):
         return self.d.get("s")
@@ -57,8 +57,11 @@ class JSONMessage:
     def method_name(self) -> Optional[str]:
         return self.d.get("m")
 
-    def exception_text(self) -> Optional[str]:
-        return self.d.get("e")
+    def exception(self) -> Optional[Exception]:
+        e_text = self.d.get("e")
+        if e_text:
+            return IOError(e_text)
+        return None
 
     def response(self) -> Optional[Any]:
         return self.d.get("r")

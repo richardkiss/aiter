@@ -58,6 +58,8 @@ class test_remote(unittest.TestCase):
             rpc_1_to_2.start()
             rpc_2_to_1.start()
 
+            d = {"foo": [50, 60], "ark": [1000, 2002], "zoo": []}
+
             assert await api_1.current_val() == 200
             assert await api_2.current_val() == 300
             assert await remote_api_1.current_val() == 200
@@ -75,10 +77,23 @@ class test_remote(unittest.TestCase):
             assert await api_1.current_val() == 251
             assert await remote_api_1.current_val() == 251
 
-            d = {"foo": [50, 60], "ark": [1000, 2002], "zoo": []}
             assert await api_2.vowel_total(d) == 3002
             assert await remote_api_2.vowel_total(d) == 3002
             assert await api_2.vowel_total(d=d) == 3002
             assert await remote_api_2.vowel_total(d=d) == 3002
+
+            try:
+                await api_2.vowel_total(j=d)
+                self.assertFalse("exception expected")
+            except TypeError:
+                pass
+
+            try:
+                r = await remote_api_1.vowel_total(j=d)
+                self.assertFalse("exception expected")
+            except OSError as ex:
+                self.assertEqual(
+                    ex.args[0], "vowel_total() got an unexpected keyword argument 'j'"
+                )
 
         asyncio.run(do_async_tests())
