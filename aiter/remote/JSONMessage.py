@@ -12,7 +12,6 @@ def convert_with_table(v, t, lookup):
 
 
 class JSONMessage:
-
     def __init__(self, d):
         self.d = d
 

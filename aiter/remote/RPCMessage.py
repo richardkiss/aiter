@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, Type
 
 
 class RPCMessage:
@@ -38,4 +38,11 @@ class RPCMessage:
         pass
 
     def args_and_kwargs(self):
+        pass
+
+    def from_simple_types(self, v: Any, t: Type, rpc_streamer) -> Any:
+        pass
+
+    @classmethod
+    def to_simple_types(cls: Type, v: Any, t: Type, rpc_streamer) -> Any:
         pass

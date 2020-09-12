@@ -42,7 +42,6 @@ async def create_tcp_site(runner, path, start_port, end_port=65536, host="127.0.
 
 
 def ws_callback_for_api(api_list):
-
     async def ws_callback(ws):
         rpc_stream = rpc_stream_for_websocket_aiohttp(ws)
         for index, api in enumerate(api_list):

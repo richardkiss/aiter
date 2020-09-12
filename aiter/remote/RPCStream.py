@@ -1,9 +1,9 @@
 import asyncio
 import weakref
 
-from typing import Any, Callable, Dict, List, Type
+from typing import Any, AsyncGenerator, Awaitable, Callable, Dict, List, Optional, Type
 
-from .proxy import proxy_for_instance
+from .proxy import Proxy
 from .response import Response
 from .RPCMessage import RPCMessage
 
@@ -11,9 +11,9 @@ from .RPCMessage import RPCMessage
 class RPCStream:
     def __init__(
         self,
-        msg_aiter_in,
+        msg_aiter_in: AsyncGenerator[RPCMessage, None],
         async_msg_out_callback,
-        rpc_message_class,
+        rpc_message_class: Type[RPCMessage],
         bad_channel_callback=None,
     ):
         """
@@ -24,26 +24,32 @@ class RPCStream:
         """
         self._msg_aiter_in = msg_aiter_in
         self._async_msg_out_callback = async_msg_out_callback
-        self._rpc_message_class = rpc_message_class
+        self._rpc_message_class: Type[RPCMessage] = rpc_message_class
         self._bad_channel_callback = bad_channel_callback
-        self._next_channel = 0
-        self._inputs_task = None
-        self._locals_objects_by_channel = weakref.WeakValueDictionary()
+        self._next_channel: int = 0
+        self._inputs_task: Optional[Awaitable] = None
+        self._locals_objects_by_channel: Dict[int, Any] = weakref.WeakValueDictionary()
 
-    def next_channel(self):
+    def next_channel(self) -> int:
         self._next_channel += 1
         return self._next_channel
 
-    def register_local_obj(self, obj, channel):
+    def register_local_obj(self, obj: Any, channel: int):
         self._locals_objects_by_channel[channel] = obj
 
-    def remote_obj(self, cls, channel):
+    def remote_obj(self, cls, channel: int) -> Proxy:
+        """
+        This returns a `Proxy` instance which only allows async method invocations.
+        """
+
         async def callback_f(attr_name, args, kwargs, annotations):
             source = self.next_channel()
             future = asyncio.Future()
             return_type = annotations.get("return")
             to_simple_types = self._rpc_message_class.to_simple_types
-            raw_args, raw_kwargs = recast_arguments(annotations, to_simple_types, args, kwargs, self)
+            raw_args, raw_kwargs = recast_arguments(
+                annotations, to_simple_types, args, kwargs, self
+            )
             msg = self._rpc_message_class.for_invocation(
                 attr_name, raw_args, raw_kwargs, source, channel
             )
@@ -52,9 +58,9 @@ class RPCStream:
             await self._async_msg_out_callback(msg)
             return await future
 
-        return proxy_for_instance(cls, callback_f)
+        return Proxy(cls, callback_f)
 
-    def start(self):
+    def start(self) -> None:
         """
         Start the task that fetches requests and generates responses.
         It runs until the `msg_aiter_in` stops.
@@ -63,7 +69,7 @@ class RPCStream:
             raise RuntimeError(f"{self} already running")
         self._inputs_task = asyncio.ensure_future(self._run_inputs())
 
-    async def process_msg_for_obj(self, msg: RPCMessage, obj):
+    async def process_msg_for_obj(self, msg: RPCMessage, obj: Any) -> Any:
         """
         This method accepts a message and an object, and handles it.
         There are two cases: the message is a request, or the message is a response.
@@ -99,15 +105,13 @@ class RPCStream:
         if e_text:
             obj.future.set_exception(IOError(e_text))
         else:
-            final_r = recast_to_type(msg.response(), return_type, msg.from_simple_types, self)
+            final_r = recast_to_type(
+                msg.response(), return_type, msg.from_simple_types, self
+            )
             obj.future.set_result(final_r)
         return None
 
-    async def _run_inputs(self):
-        async for msg in self._msg_aiter_in:
-            await self.handle_message(msg)
-
-    async def handle_message(self, msg):
+    async def handle_message(self, msg: RPCMessage) -> None:
         target = msg.target()
         obj = self._locals_objects_by_channel.get(target)
         if obj is None:
@@ -118,6 +122,10 @@ class RPCStream:
         if r_msg:
             await self._async_msg_out_callback(r_msg)
 
+    async def _run_inputs(self):
+        async for msg in self._msg_aiter_in:
+            await self.handle_message(msg)
+
     async def await_closed(self):
         """
         Wait for `msg_aiter_in` to stop.
@@ -126,8 +134,11 @@ class RPCStream:
 
 
 def recast_to_type(
-    value: Any, the_type: Type, cast_simple_type: Callable[[Any, Type], Any], rpc_stream: RPCStream,
-):
+    value: Any,
+    the_type: Type,
+    cast_simple_type: Callable[[Any, Type, RPCStream], Any],
+    rpc_stream: RPCStream,
+) -> Any:
     """
     Take the given value `value`, and recast it to type `the_type`, using `cast_simple_type`,
     drilling down through the hierarchy if necessary.
@@ -146,18 +157,20 @@ def recast_to_type(
 
     if origin is list:
         value_type = the_type.__args__[0]
-        return list(recast_to_type(_, value_type, cast_simple_type, rpc_stream) for _ in value)
+        return list(
+            recast_to_type(_, value_type, cast_simple_type, rpc_stream) for _ in value
+        )
 
     return cast_simple_type(value, the_type, rpc_stream)
 
 
 def recast_arguments(
     annotations: Dict[str, Type],
-    cast_simple_type: Callable[[Any, Type], Any],
+    cast_simple_type: Callable[[Any, Type, RPCStream], Any],
     args: List[Any],
     kwargs: Dict[str, Any],
     rpc_stream: RPCStream,
-):
+) -> Any:
     """
     Returns `args`, `kwargs`, using the annotation hints and cast function.
     """
@@ -168,7 +181,7 @@ def recast_arguments(
     ]
 
     cast_kwargs = {
-        k: recast_to_type(kwargs[k], annotations.get(k), cast_simple_type, rpc_stream)
+        k: recast_to_type(t, annotations.get(k), cast_simple_type, rpc_stream)
         for k, t in kwargs.items()
     }
 
