@@ -8,4 +8,6 @@ from typing import Any, Type
 class Response:
     future: asyncio.Future
     return_type: Type
-    invocation_msg: Any
+
+    def __hash__(self):
+        return id(self)

@@ -4,13 +4,6 @@ import json
 from typing import Any, Optional
 
 
-def convert_with_table(v, t, lookup):
-    f = lookup.get(t)
-    if f:
-        return f(v)
-    raise TypeError(f"can't convert {v} to type {t}")
-
-
 class JSONMessage:
     def __init__(self, d):
         self.d = d
@@ -24,7 +17,7 @@ class JSONMessage:
         return cls(json.loads(text))
 
     def serialize(self):
-        return json.dumps(self.d)
+        return json.dumps(self.d).encode("utf8")
 
     @classmethod
     def for_invocation(cls, method_name, args, kwargs, source, target):
@@ -46,7 +39,7 @@ class JSONMessage:
 
     @classmethod
     def for_exception(cls, target, exception):
-        return cls(dict(t=target, e=str(exception)))
+        return cls(dict(t=target, e=repr(exception)))
 
     def source(self):
         return self.d.get("s")
@@ -79,7 +72,7 @@ class JSONMessage:
             int: lambda a: a,
             datetime.datetime: lambda v: datetime.datetime.fromtimestamp(float(v)),
         }
-        return convert_with_table(v, t, d)
+        return cls.convert_with_table(v, t, d)
 
     @classmethod
     def to_simple_types(cls, v, t, rpc_streamer):
@@ -90,4 +83,11 @@ class JSONMessage:
             int: lambda a: a,
             datetime.datetime: lambda v: str(v.timestamp()),
         }
-        return convert_with_table(v, t, d)
+        return cls.convert_with_table(v, t, d)
+
+    @classmethod
+    def convert_with_table(cls, v, t, lookup):
+        f = lookup.get(t)
+        if f:
+            return f(v)
+        raise TypeError(f"can't convert {v} to type {t}")

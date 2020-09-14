@@ -28,14 +28,23 @@ class RPCStream:
         self._bad_channel_callback = bad_channel_callback
         self._next_channel: int = 0
         self._inputs_task: Optional[Awaitable] = None
-        self._locals_objects_by_channel: Dict[int, Any] = weakref.WeakValueDictionary()
+        self._local_objects_by_channel: Dict[int, Any] = weakref.WeakValueDictionary()
+        self._remote_channels_by_proxy: Dict[Proxy, int] = weakref.WeakKeyDictionary()
 
     def next_channel(self) -> int:
+        channel = self._next_channel
         self._next_channel += 1
-        return self._next_channel
+        return channel
 
-    def register_local_obj(self, obj: Any, channel: int):
-        self._locals_objects_by_channel[channel] = obj
+    def register_local_obj(self, obj: Any):
+        if obj in self._local_objects_by_channel:
+            return self._local_objects_by_channel.get(obj)
+        channel = self.next_channel()
+        self._local_objects_by_channel[channel] = obj
+        return channel
+
+    def local_object_for_channel(self, channel: int) -> Optional[Any]:
+        return self._local_objects_by_channel.get(channel)
 
     def remote_obj(self, cls, channel: int) -> Proxy:
         """
@@ -43,9 +52,11 @@ class RPCStream:
         """
 
         async def callback_f(attr_name, args, kwargs, annotations):
-            source = self.next_channel()
             future = asyncio.Future()
             return_type = annotations.get("return")
+            response = Response(future, return_type)
+            source = self.register_local_obj(response)
+
             to_simple_types = self._rpc_message_class.to_simple_types
             raw_args, raw_kwargs = recast_arguments(
                 annotations, to_simple_types, args, kwargs, self
@@ -53,12 +64,12 @@ class RPCStream:
             msg = self._rpc_message_class.for_invocation(
                 attr_name, raw_args, raw_kwargs, source, channel
             )
-            response = Response(future, return_type, msg)
-            self.register_local_obj(response, source)
             await self._async_msg_out_callback(msg)
             return await future
 
-        return Proxy(cls, callback_f)
+        proxy = Proxy(cls, callback_f)
+        self._remote_channels_by_proxy[proxy] = channel
+        return proxy
 
     def start(self) -> None:
         """
@@ -79,17 +90,17 @@ class RPCStream:
         if method_name:
             # it's a request
 
-            method = getattr(obj, method_name, None)
-            if method is None:
-                raise ValueError(f"no method {method} on {obj}")
-            annotations = method.__annotations__
-
-            raw_args, raw_kwargs = msg.args_and_kwargs()
-            args, kwargs = recast_arguments(
-                annotations, msg.from_simple_types, raw_args, raw_kwargs, self
-            )
             source = msg.source()
             try:
+                method = getattr(obj, method_name, None)
+                if method is None:
+                    raise ValueError(f"no method {method} on {obj}")
+                annotations = method.__annotations__
+
+                raw_args, raw_kwargs = msg.args_and_kwargs()
+                args, kwargs = recast_arguments(
+                    annotations, msg.from_simple_types, raw_args, raw_kwargs, self
+                )
                 r = await method(*args, **kwargs)
 
                 return_type = annotations.get("return")
@@ -113,7 +124,7 @@ class RPCStream:
 
     async def handle_message(self, msg: RPCMessage) -> None:
         target = msg.target()
-        obj = self._locals_objects_by_channel.get(target)
+        obj = self._local_objects_by_channel.get(target)
         if obj is None:
             if self._bad_channel_callback:
                 self._bad_channel_callback(target)

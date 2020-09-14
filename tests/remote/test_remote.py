@@ -45,11 +45,13 @@ class test_remote(unittest.TestCase):
 
         api_1 = DemoAPI(200)
         rpc_1_to_2 = RPCStream(pa1, async_push_for_push_aiter(pa2), JSONMessage)
-        rpc_1_to_2.register_local_obj(api_1, 0)
+        source = rpc_1_to_2.register_local_obj(api_1)
+        assert source == 0
 
         api_2 = DemoAPI(300)
         rpc_2_to_1 = RPCStream(pa2, async_push_for_push_aiter(pa1), JSONMessage)
-        rpc_2_to_1.register_local_obj(api_2, 0)
+        source = rpc_2_to_1.register_local_obj(api_2)
+        assert source == 0
 
         remote_api_1 = rpc_2_to_1.remote_obj(DemoAPI, 0)
         remote_api_2 = rpc_1_to_2.remote_obj(DemoAPI, 0)
@@ -93,7 +95,8 @@ class test_remote(unittest.TestCase):
                 self.assertFalse("exception expected")
             except OSError as ex:
                 self.assertEqual(
-                    ex.args[0], "vowel_total() got an unexpected keyword argument 'j'"
+                    ex.args[0],
+                    """TypeError("vowel_total() got an unexpected keyword argument 'j'")""",
                 )
 
         asyncio.run(do_async_tests())
