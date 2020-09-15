@@ -35,3 +35,6 @@ class Proxy:
             return await self.callback_f(attr_name, args, kwargs, annotations)
 
         return invoke
+
+    def __repr__(self):
+        return f"<Proxy for {self.cls} at {hex(id(self))}>"
