@@ -3,6 +3,7 @@ import datetime
 from typing import List
 
 from aiter.remote import JSONMessage
+from aiter.remote.one_shot import one_shot
 from aiter.remote.proxy import Proxy
 
 
@@ -42,6 +43,7 @@ class MemberAPI:
     def __init__(self, path):
         self._output = open(path, "a+")
 
+    @one_shot
     async def accept_message(self, msg: str) -> None:
         self._output.write(msg)
         self._output.write("\n")

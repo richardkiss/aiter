@@ -31,8 +31,9 @@ class Proxy:
             attribute = getattr(self.cls, attr_name, None)
             if attribute is None:
                 raise AttributeError(f"bad attribute {attr_name}")
+            is_one_shot = getattr(attribute, "one_shot", False)
             annotations = attribute.__annotations__
-            return await self.callback_f(attr_name, args, kwargs, annotations)
+            return await self.callback_f(attr_name, args, kwargs, annotations, is_one_shot)
 
         return invoke
 

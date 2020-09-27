@@ -5,12 +5,14 @@ from typing import Dict, List
 
 from aiter import push_aiter
 from aiter.remote import JSONMessage, RPCStream
+from aiter.remote.one_shot import one_shot
 
 
 class DemoAPI:
     def __init__(self, val):
         self.val = val
 
+    @one_shot
     async def inc(self, diff: int = 1) -> None:
         self.val += diff
 
@@ -68,16 +70,19 @@ class test_remote(unittest.TestCase):
             assert await remote_api_2.current_val() == 300
 
             await remote_api_1.inc()
-            assert await api_1.current_val() == 201
+            # the next line works because `inc` is `one_shot`
+            # and hasn't had time to execute yet
+            assert await api_1.current_val() == 200
             assert await remote_api_1.current_val() == 201
+            assert await api_1.current_val() == 201
 
             await remote_api_1.inc(20)
-            assert await api_1.current_val() == 221
             assert await remote_api_1.current_val() == 221
+            assert await api_1.current_val() == 221
 
             await remote_api_1.inc(diff=30)
-            assert await api_1.current_val() == 251
             assert await remote_api_1.current_val() == 251
+            assert await api_1.current_val() == 251
 
             assert await api_2.vowel_total(d) == 3002
             assert await remote_api_2.vowel_total(d) == 3002
@@ -91,7 +96,7 @@ class test_remote(unittest.TestCase):
                 pass
 
             try:
-                r = await remote_api_1.vowel_total(j=d)
+                await remote_api_1.vowel_total(j=d)
                 self.assertFalse("exception expected")
             except OSError as ex:
                 self.assertEqual(

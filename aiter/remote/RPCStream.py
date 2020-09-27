@@ -51,7 +51,7 @@ class RPCStream:
         This returns a `Proxy` instance which only allows async method invocations.
         """
 
-        async def callback_f(attr_name, args, kwargs, annotations):
+        async def callback_f(attr_name, args, kwargs, annotations, is_one_shot):
             future = asyncio.Future()
             return_type = annotations.get("return")
             response = Response(future, return_type)
@@ -65,6 +65,9 @@ class RPCStream:
                 attr_name, raw_args, raw_kwargs, source, channel
             )
             await self._async_msg_out_callback(msg)
+            if is_one_shot:
+                return None
+
             return await future
 
         proxy = Proxy(cls, callback_f)
@@ -101,7 +104,11 @@ class RPCStream:
                 args, kwargs = recast_arguments(
                     annotations, msg.from_simple_types, raw_args, raw_kwargs, self
                 )
+                is_one_shot = getattr(method, "one_shot", False)
                 r = await method(*args, **kwargs)
+
+                if is_one_shot:
+                    return None
 
                 return_type = annotations.get("return")
                 simple_r = recast_to_type(r, return_type, msg.to_simple_types, self)
