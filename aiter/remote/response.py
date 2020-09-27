@@ -1,7 +1,7 @@
 import asyncio
 
 from dataclasses import dataclass
-from typing import Any, Type
+from typing import Type
 
 
 @dataclass

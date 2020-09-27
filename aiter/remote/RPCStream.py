@@ -17,8 +17,8 @@ class RPCStream:
         bad_channel_callback=None,
     ):
         """
-        msg_aiter_in: yields triple of source, target, msg
-        async_msg_out_callback: accepts push of triples of source, target, msg
+        msg_aiter_in: yields `RPCMessage`
+        async_msg_out_callback: accepts push of `RPCMessage`
         msg_for_invocation: turns the invocation into an (opaque) message
         bad_channel_callback: this is called when a reference an invalid channel occurs. For debugging.
         """
