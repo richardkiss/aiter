@@ -2,7 +2,7 @@ import asyncio
 
 
 def run(f):
-    return asyncio.get_event_loop().run_until_complete(f)
+    return asyncio.new_event_loop().run_until_complete(f)
 
 
 async def get_n(aiter, n=0):

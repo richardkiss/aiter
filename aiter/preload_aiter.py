@@ -18,8 +18,8 @@ async def preload_aiter(preload_size, aiter):
     """
 
     gate = gated_aiter(aiter)
-    gate.push(preload_size)
+    await gate.push(preload_size)
     async for _ in gate:
         yield _
-        gate.push(1)
+        await gate.push(1)
     gate.stop()

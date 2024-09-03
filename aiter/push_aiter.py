@@ -17,18 +17,25 @@ class push_aiter:
     a task that is occasionally invoked (like a hardware interrupt)
     to produce a new event for an aiter.
     """
-    def __init__(self):
-        self._head = self._tail = asyncio.Future()
 
-    def push(self, *items):
+    def __init__(self):
+        self._head = self._tail = None
+        self._is_stopped = False
+
+    async def _setup(self):
+        if not self._is_stopped and self._head is None:
+            self._head = self._tail = asyncio.get_event_loop().create_future()
+
+    async def push(self, *items):
         """
         Accept one or more item and push them to the end of the
         aiter's queue.
         """
-        if self._head.cancelled():
+        await self._setup()
+        if self._is_stopped or self._head.cancelled():
             raise ValueError("%s closed" % self)
         for item in items:
-            f = asyncio.Future()
+            f = asyncio.get_event_loop().create_future()
             self._head.set_result((item, f))
             self._head = f
 
@@ -37,9 +44,14 @@ class push_aiter:
         Raise a `StopAsyncIteration` exception on the listener side
         once no more already-queued elements are pending.
         """
-        self._head.cancel()
+        self._is_stopped = True
+        if self._head is not None:
+            self._head.cancel()
 
     async def __aiter__(self):
+        await self._setup()
+        if self._head is None:
+            return
         try:
             while True:
                 _, self._tail = await self._tail
@@ -52,6 +64,8 @@ class push_aiter:
         Return a *synchronous* iterator of elements that are immediately
         available to be consumed without waiting for a task switch.
         """
+        if self._head is None:
+            return
         tail = self._tail
         try:
             while tail.done():
@@ -68,7 +82,7 @@ class push_aiter:
         :return: whether or not the aiter has been stopped
         :rtype: bool
         """
-        return self._tail.cancelled()
+        return self._is_stopped or (self._tail is not None and self._tail.cancelled())
 
     def is_item_available(self):
         """
@@ -92,7 +106,7 @@ class push_aiter:
         :rtype: bool
         """
         for _, item in enumerate(self.available_iter()):
-            if _+1 >= n:
+            if _ + 1 >= n:
                 return True
         return False
 

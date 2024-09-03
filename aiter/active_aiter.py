@@ -25,7 +25,7 @@ async def active_aiter(aiter):
 
     async def _pull_task(aiter):
         async for _ in aiter:
-            q.push(_)
+            await q.push(_)
         q.stop()
 
     task = asyncio.ensure_future(_pull_task(aiter))

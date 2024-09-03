@@ -15,7 +15,7 @@ class deferred_coroutine:
     :param lambda_coroutine: a 0-argument function returning an awaitable (usually a coroutine)
     """
     def __init__(self, lambda_coroutine):
-        self._next_future = asyncio.Future()
+        self._next_future = None
         self._active_invoked = False
         self._lambda_coroutine = lambda_coroutine
 
@@ -28,6 +28,8 @@ class deferred_coroutine:
         already in progress.
         """
 
+        if self._next_future is None:
+            self._next_future = asyncio.get_event_loop().create_future()
         if is_active and not self._active_invoked:
             try:
                 self._active_invoked = True

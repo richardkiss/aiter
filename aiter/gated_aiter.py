@@ -31,7 +31,7 @@ class gated_aiter:
         async with self._semaphore:
             return (await self._open_aiter.__anext__())[0]
 
-    def push(self, count):
+    async def push(self, count: int) -> None:
         """
         Note that several additional items are allowed through the gated_aiter.
 
@@ -39,9 +39,9 @@ class gated_aiter:
         :param count: the number of items that can be allowed out the aiter. These are cumulative.
         """
         if not self._gate.is_stopped():
-            self._gate.push(count)
+            await self._gate.push(count)
 
-    def stop(self):
+    def stop(self) -> None:
         """
         After the previously authorized items (from `push`) are pulled out the aiter, the aiter will exit.
         """
